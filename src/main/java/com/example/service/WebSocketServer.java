@@ -17,12 +17,21 @@ import java.util.concurrent.atomic.AtomicInteger;
 @Component
 @ServerEndpoint("/webSocket/{sid}")
 public class WebSocketServer {
-    // 静态变量，用来记录当前在线链接数，应该把他设计成线程安全的
+    /** 静态变量，用来记录当前在线链接数，应该把他设计成线程安全的
+     *
+     */
     private static AtomicInteger onlineNum = new AtomicInteger();
-    // concurrent包的线程安全set，用来存放每个客户端对应的webSocketServer对象。
+    /** concurrent包的线程安全set，用来存放每个客户端对应的webSocketServer对象。
+     *
+     */
     private static ConcurrentHashMap<String, Session> sessionPools = new ConcurrentHashMap<String, Session>();
 
-    // 发送消息
+    /** 发送消息
+     *
+     * @param session
+     * @param message
+     * @throws IOException
+     */
     public void sendMessage(Session session, String message) throws IOException {
         if(session != null) {
             synchronized (session) {
@@ -32,13 +41,22 @@ public class WebSocketServer {
         }
     }
 
-    // 给指定用户发送信息
+    /**  给指定用户发送信息
+     *
+     * @param userName
+     * @param message
+     * @throws IOException
+     */
     public void sendInfo(String userName, String message) throws IOException {
         Session session = sessionPools.get(userName);
         sendMessage(session, message);
     }
 
-    // 建立链接成功调用
+    /** 建立链接成功调用
+     *
+     * @param session
+     * @param userName
+     */
     @OnOpen
     public void onOpen(Session session, @PathParam(value = "sid") String userName) {
         System.out.println("websocket期望建立链接");
@@ -52,7 +70,10 @@ public class WebSocketServer {
         }
     }
 
-    //关闭链接时调用
+    /** 关闭链接时调用
+     *
+     * @param userName
+     */
     @OnClose
     public void onClose(@PathParam(value = "sid") String userName){
         sessionPools.remove(userName);
@@ -60,7 +81,10 @@ public class WebSocketServer {
         System.out.println(userName + "断开webSocket链接！当前人数为" + onlineNum);
     }
 
-    //收到客户端信息
+    /** 收到客户端信息
+     *
+     * @param message
+     */
     @OnMessage
     public void onMessage(String message) {
         message = "客户端：" + message + ",已收到";
@@ -74,28 +98,16 @@ public class WebSocketServer {
         }
     }
 
-    //错误时调用
+    /** 错误时调用
+     *
+     * @param session
+     * @param throwable
+     */
     @OnError
     public void onError(Session session, Throwable throwable) {
         System.out.println("发生错误");
         throwable.printStackTrace();
     }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
     public static void addOnlineCount() {
         onlineNum.incrementAndGet();
@@ -104,6 +116,5 @@ public class WebSocketServer {
     public static void subOnlineCount() {
         onlineNum.decrementAndGet();
     }
-
 
 }
